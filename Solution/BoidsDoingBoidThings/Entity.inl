@@ -28,6 +28,16 @@ inline const std::string& Entity::GetEntityName() const
 	return m_sEntityName;
 }
 
+inline glm::vec3 Entity::GetForward() const
+{
+	return m_vFwd;
+}
+
+inline glm::vec3 Entity::GetRight() const
+{
+	return m_vRight;
+}
+
 template<typename T>
 std::weak_ptr<T> Entity::GetComponent()
 {
@@ -49,6 +59,12 @@ std::weak_ptr<T> Entity::AddComponent()
 {
 	// create the new component
 	std::shared_ptr<T> newPtr = std::make_shared<T>();
+	if (!dynamic_cast<Component*>(newPtr.get()))
+	{
+		std::cout << "Tried to add a component that's not a component\n";
+		return std::weak_ptr<T>();
+	}
+	dynamic_cast<Component*>(newPtr.get())->m_pParent = this;
 	// add it to the list
 	m_vComponents.push_back(newPtr);
 	// return a ptr to it for if they want to keep it

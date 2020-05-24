@@ -12,3 +12,13 @@ inline Input& Engine::GetInput()
 {
 	return m_Input;
 }
+
+inline EntityWorld& Engine::GetEntityWorld()
+{
+	return m_EntityWorld;
+}
+
+inline Renderer3D& Engine::GetRenderer3D()
+{
+	return m_rend3d;
+}

@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <iostream>
 #include "Component.h"
 #include "MeshRenderer.h"
 
@@ -17,6 +18,8 @@ public:
 	inline glm::vec3 GetEuler() const;
 	inline glm::vec3 GetScale() const;
 	inline glm::mat4 GetTransformMatrix() const;
+	inline glm::vec3 GetForward() const;
+	inline glm::vec3 GetRight() const;
 	void SetPosition(const glm::vec3& newPos);
 	void SetEuler(const glm::vec3& newEuler);
 	void SetScale(const glm::vec3& newScale);
@@ -44,6 +47,8 @@ private:
 	glm::vec3 m_vPosition;
 	glm::vec3 m_vEuler;
 	glm::vec3 m_vScale;
+	glm::vec3 m_vFwd;
+	glm::vec3 m_vRight;
 	glm::mat4 m_mTransformMatrix;
 };
 #include "Entity.inl"

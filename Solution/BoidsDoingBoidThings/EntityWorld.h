@@ -20,6 +20,7 @@ public:
 	std::weak_ptr<Entity> CreateEntity(const std::string& name);
 	void DestroyEntity(std::weak_ptr<Entity>& e);
 private:
+	void Update();
 	std::vector<std::shared_ptr<Entity>> m_vEntityList;
 	unsigned int m_iLastID = 0;
 	EntityWorld() = default;

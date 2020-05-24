@@ -1,5 +1,13 @@
 #include "EntityWorld.h"
 #include "Entity.h"
+void EntityWorld::Update()
+{
+	for (auto& it : m_vEntityList)
+	{
+		it->Update();
+	}
+}
+
 std::weak_ptr<Entity> EntityWorld::GetEntityByID(unsigned int id)
 {
 	std::weak_ptr<Entity> e;

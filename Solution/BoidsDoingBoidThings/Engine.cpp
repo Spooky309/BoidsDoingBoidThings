@@ -3,8 +3,10 @@
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
+#include "ViewControls.h"
+#include "Entity.h"
 
-Engine::Engine() : m_pWindow(nullptr), m_dLastTime(0.0), m_dDeltaTime(0.0), m_pEntityWorld(new EntityWorld())
+Engine::Engine() : m_pWindow(nullptr), m_dLastTime(0.0), m_dDeltaTime(0.0)
 {
 }
 
@@ -44,6 +46,10 @@ int Engine::Go()
 	ImGui_ImplGlfw_InitForOpenGL(m_pWindow, true);
 	ImGui_ImplOpenGL3_Init("#version 410 core");
 	
+	m_rend3d.Init();
+
+	m_pViewer = m_EntityWorld.CreateEntity("viewer");
+	m_pViewer.lock()->AddComponent<ViewControls>();
 	while (!glfwWindowShouldClose(m_pWindow))
 	{
 		m_dLastTime = glfwGetTime();
@@ -52,6 +58,7 @@ int Engine::Go()
 	}
 
 	Deinit();
+	return 0;
 }
 
 void Engine::Update()
@@ -59,16 +66,20 @@ void Engine::Update()
 	// Updating
 	m_Input.Update(); // we first want to copy the keys and buttons from the last frame to the "lastframe" array, before we poll events (which will overwrite current ones)
 	glfwPollEvents();
+	m_EntityWorld.Update();
 
 	// Rendering
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	m_rend3d.Render();
 	// make sure ui draws last
 	
 	ImGui_ImplOpenGL3_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
-	ImGui::Begin("Settings");
-	ImGui::Text("thanks gonzo");
+	ImGui::Begin("Info");
+	ImGui::Text("Player Position: %f, %f, %f", m_pViewer.lock()->GetPosition().x, m_pViewer.lock()->GetPosition().y, m_pViewer.lock()->GetPosition().z);
+	ImGui::Text("Player Rotation: %f, %f, %f", m_pViewer.lock()->GetEuler().x, m_pViewer.lock()->GetEuler().y, m_pViewer.lock()->GetEuler().z);
+	ImGui::Text("Player Forward: %f, %f, %f", m_pViewer.lock()->GetForward().x, m_pViewer.lock()->GetForward().y, m_pViewer.lock()->GetForward().z);
 	ImGui::End();
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
