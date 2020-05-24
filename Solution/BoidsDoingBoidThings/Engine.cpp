@@ -38,12 +38,12 @@ int Engine::Go()
 	glEnable(GL_DEPTH_TEST);
 
 	// SET CALLBACKS HERE, OTHERWISE IMGUI WILL OVERRIDE THEM
+	m_Input.Init(m_pWindow);
 
 	ImGui::CreateContext();
 	ImGui_ImplGlfw_InitForOpenGL(m_pWindow, true);
 	ImGui_ImplOpenGL3_Init("#version 410 core");
 	
-	m_pEntityWorld->Init();
 	while (!glfwWindowShouldClose(m_pWindow))
 	{
 		m_dLastTime = glfwGetTime();
@@ -57,6 +57,7 @@ int Engine::Go()
 void Engine::Update()
 {
 	// Updating
+	m_Input.Update(); // we first want to copy the keys and buttons from the last frame to the "lastframe" array, before we poll events (which will overwrite current ones)
 	glfwPollEvents();
 
 	// Rendering
@@ -73,9 +74,14 @@ void Engine::Update()
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
 	glfwSwapBuffers(m_pWindow);
+
+	if (m_Input.GetKeyDown(GLFW_KEY_ESCAPE))
+	{
+		glfwSetWindowShouldClose(m_pWindow, GLFW_TRUE);
+	}
 }
 
 void Engine::Deinit()
 {
-
+	glfwTerminate();
 }
