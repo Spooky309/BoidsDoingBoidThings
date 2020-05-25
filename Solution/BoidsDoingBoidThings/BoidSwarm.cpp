@@ -241,7 +241,7 @@ void BoidSwarm::Update()
 					// that points away from the origin in direction of the normal
 					glm::vec3 hitpoint = *myPosition + ((glm::normalize(m_aBoidVelocities[i])) * intersectDistance);
 					glm::vec3 normal = glm::normalize(hitpoint - origin);
-					weight *= 50.0f; // should be sufficient amplification, 0-10
+					weight *= m_fBoidObstacleWeight; // should be sufficient amplification, 0-10
 					glm::vec3 obForce = normal * weight;
 					obForce = SteerTowards(m_aBoidVelocities[i], obForce);
 					desiredVelocity += obForce;
@@ -409,6 +409,7 @@ void BoidSwarm::DrawImgui()
 	ImGui::SliderFloat("Constraint Box Length", &m_fBoidConstraintLength, 100.0f, 5000.0f);
 	ImGui::Separator();
 	ImGui::SliderFloat("Raycast distance (for obstacle avoidance)", &m_fBoidRayLength, 10.0f, 1000.0f);
+	ImGui::SliderFloat("Obstacle Avoidance Weight", &m_fBoidObstacleWeight, 0.0f, 100.0f);
 	ImGui::Separator();
 	ImGui::SliderInt("Number of Boids", &m_iNewNumBoids, 1, 10000);
 	ImGui::Separator();
