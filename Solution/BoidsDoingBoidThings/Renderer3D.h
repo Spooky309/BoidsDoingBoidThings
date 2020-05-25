@@ -31,6 +31,7 @@ public:
 private:
 	void Init();
 	void Render();
+	void UpdateRes(int newX, int newY);
 	std::queue<RenderArgs> m_queuedRenders;
 	std::queue<InstancedRenderArgs> m_queuedInstancedRenders;
 	GLuint m_iRendShader;

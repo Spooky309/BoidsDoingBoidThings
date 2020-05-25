@@ -36,6 +36,7 @@ private:
 	double m_dMaxTime;
 	double m_dAvgTime;
 	double m_dAvgFps;
+	bool m_bFullscreen = false;
 	std::size_t m_iFrameTimei = 0;
 	double m_dLastFrametimeUpdate = 0;
 	Input m_Input;

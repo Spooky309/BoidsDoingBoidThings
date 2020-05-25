@@ -29,6 +29,7 @@ private:
 
 	unsigned int m_iNumBoids;
 	unsigned int m_iLastNumBoids;
+	int m_iNewNumBoids;
 	ModelAsset* m_boidModel;
 	TextureAsset* m_boidTexture;
 

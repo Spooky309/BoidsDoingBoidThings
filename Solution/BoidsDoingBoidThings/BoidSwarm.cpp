@@ -11,10 +11,10 @@
 #define VECZERO(vec) (vec.x == 0.0f && vec.y == 0.0f && vec.z == 0.0f)
 
 BoidSwarm::BoidSwarm() :
-	m_iNumBoids(1000),
+	m_iNumBoids(500),
 	m_boidModel(nullptr),
 	m_boidTexture(nullptr),
-	m_iLastNumBoids(1000),
+	m_iLastNumBoids(500),
 	m_iVao(0),
 	m_iModelVbo(0),
 	m_iInstanceVbo(0),
@@ -24,7 +24,8 @@ BoidSwarm::BoidSwarm() :
 	m_fMovementCircleRadius(100.0f),
 	m_fBoidDrag(0.01f),
 	m_fBoidDesiredSpeed(50.0f),
-	m_fBoidMaxForce(0.05f)
+	m_fBoidMaxForce(0.05f),
+	m_iNewNumBoids(500)
 {
 	m_boidModel = Engine::Instance().GetAssetManager().LoadAsset<ModelAsset>("asset/boid.obj");
 	m_boidTexture = Engine::Instance().GetAssetManager().LoadAsset<TextureAsset>("asset/boid.png");
@@ -307,25 +308,28 @@ void BoidSwarm::DrawImgui()
 	float newAlignWeight = m_fBoidAlignmentWeight;
 	float newCoalesceWeight = m_fBoidCoalesceWeight;
 	ImGui::Begin("Boid Settings");
-
-	ImGui::SliderFloat("Target Force", &newTargetWeight, 0.0f, 1.0f);
+	ImGui::SliderFloat("Boid View Distance", &m_fBoidViewDistance, 1.0f, 1000.0f);
+	ImGui::Separator();
 	ImGui::Checkbox("Use Target", &m_bUseTarget);
+	ImGui::SliderFloat("Target Force", &newTargetWeight, 0.0f, 1.0f);
 	ImGui::Separator();
-
-	ImGui::SliderFloat("Avoid Force", &newAvoidWeight, 0.0f, 1.0f);
 	ImGui::Checkbox("Use Avoid", &m_bUseAvoid);
+	ImGui::SliderFloat("Avoid Force", &newAvoidWeight, 0.0f, 1.0f);
+	ImGui::SliderFloat("Avoid Space", &m_fBoidSeparationDistance, 1.0f, m_fBoidViewDistance);
 	ImGui::Separator();
-
-	ImGui::SliderFloat("Alignment Force", &newAlignWeight, 0.0f, 1.0f);
 	ImGui::Checkbox("Use Align", &m_bUseAlign);
+	ImGui::SliderFloat("Alignment Force", &newAlignWeight, 0.0f, 1.0f);
 	ImGui::Separator();
-
-	ImGui::SliderFloat("Coalesce Force", &newCoalesceWeight, 0.0f, 1.0f);
 	ImGui::Checkbox("Use Coalesce", &m_bUseCoalesce);
+	ImGui::SliderFloat("Coalesce Force", &newCoalesceWeight, 0.0f, 1.0f);
 	ImGui::Separator();
-
+	ImGui::SliderInt("Number of Boids", &m_iNewNumBoids, 1, 10000);
 	ImGui::Separator();
-	ImGui::Button("Apply and Restart");
+	if (ImGui::Button("Apply and Restart"))
+	{
+		m_iNumBoids = m_iNewNumBoids;
+	}
+	ImGui::Text("You have to press this to update Boid Count\nYou probably don't want to go over 1,000 with all the options enabled.");
 
 	ImGui::End();
 
@@ -359,6 +363,11 @@ void BoidSwarm::DrawImgui()
 			newTargetWeight -= sub;
 		}
 	}
+	if (m_fBoidSeparationDistance > m_fBoidViewDistance)
+	{
+		m_fBoidSeparationDistance = m_fBoidViewDistance;
+	}
+
 	m_fBoidTargetWeight = newTargetWeight;
 	m_fBoidAvoidWeight = newAvoidWeight;
 	m_fBoidAlignmentWeight = newAlignWeight;

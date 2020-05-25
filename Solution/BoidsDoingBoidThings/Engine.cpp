@@ -26,7 +26,7 @@ int Engine::Go()
 #endif
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE); // I remember this being necessary for macOS.
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	m_pWindow = glfwCreateWindow(1920, 1080, "dont crash", nullptr, nullptr);
+	m_pWindow = glfwCreateWindow(1280, 720, "We're just boid boys doing what boid boys do", nullptr, nullptr);
 	if (!m_pWindow)
 	{
 		std::cout << "Couldn't get a window from GLFW\n";
@@ -110,6 +110,24 @@ void Engine::Update()
 	ImGui::Separator();
 	ImGui::Text("Frametime min/max/avg: %f/%f/%f", m_dMinTime, m_dMaxTime, m_dAvgTime);
 	ImGui::Text("Average Framerate: %fFPS", 1.0/m_dAvgTime);
+	ImGui::End();
+	ImGui::Begin("Engine Settings");
+	if (ImGui::Checkbox("Fullscreen", &m_bFullscreen))
+	{
+		if (m_bFullscreen)
+		{
+			GLFWmonitor* primary = glfwGetPrimaryMonitor();
+			const GLFWvidmode* mode = glfwGetVideoMode(primary);
+			glfwSetWindowMonitor(m_pWindow, primary, 0, 0, mode->width, mode->height, mode->refreshRate);
+			m_rend3d.UpdateRes(mode->width, mode->height);
+			glfwSwapInterval(1);
+		}
+		else
+		{
+			glfwSetWindowMonitor(m_pWindow, nullptr, 100, 100, 1280, 720, 0);
+			m_rend3d.UpdateRes(1280, 720);
+		}
+	}
 	ImGui::End();
 	std::shared_ptr<BoidSwarm> b = m_pBoidSwarmComponent.lock();
 	b->DrawImgui();

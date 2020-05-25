@@ -7,7 +7,7 @@
 
 void Renderer3D::Init()
 {
-	glm::mat4 proj = glm::perspective(45.0f, 1920.0f / 1080.0f, 0.1f, 10000.0f);
+	glm::mat4 proj = glm::perspective(45.0f, 1280.0f / 720.0f, 0.1f, 10000.0f);
 	// load shaders
 	GLuint fshad; // same for both
 	GLuint vshad;
@@ -103,4 +103,14 @@ void Renderer3D::UpdateViewMatrix(const glm::mat4& newView)
 	glUniformMatrix4fv(m_iRendShaderViewMatLoc, 1, GL_FALSE, glm::value_ptr(newView));
 	glUseProgram(m_iInstRendShader);
 	glUniformMatrix4fv(m_iInstRendShaderViewMatLoc, 1, GL_FALSE, glm::value_ptr(newView));
+}
+
+void Renderer3D::UpdateRes(int newX, int newY)
+{
+	glm::mat4 proj = glm::perspective(45.0f, (float)newX / (float)newY, 0.1f, 10000.0f);
+	glUseProgram(m_iRendShader);
+	glUniformMatrix4fv(m_iRendShaderProjMatLoc, 1, GL_FALSE, glm::value_ptr(proj));
+	glUseProgram(m_iInstRendShader);
+	glUniformMatrix4fv(m_iInstRendShaderProjMatLoc, 1, GL_FALSE, glm::value_ptr(proj));
+	glViewport(0, 0, newX, newY);
 }

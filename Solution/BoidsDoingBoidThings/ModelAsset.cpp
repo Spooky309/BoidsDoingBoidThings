@@ -93,14 +93,15 @@ void ModelAsset::LoadOBJ(const std::string& path)
     size_t vi = 0;
     for (size_t i = 0; i < vertIndices.size(); i++)
     {
-        frames[vi++] = verts[(vertIndices[i] * 3)];
-        frames[vi++] = verts[(vertIndices[i] * 3) + 1];
-        frames[vi++] = verts[(vertIndices[i] * 3) + 2];
-        frames[vi++] = normals[(normIndices[i] * 3)];
-        frames[vi++] = normals[(normIndices[i] * 3) + 1];
-        frames[vi++] = normals[(normIndices[i] * 3) + 2];
-        frames[vi++] = uvs[(uvIndices[i] * 2)];
-        frames[vi++] = uvs[(uvIndices[i] * 2) + 1];
+        // this horrificness is required to prevent MSVC from complaining about upcasts
+        frames[vi++] = verts[(((std::size_t)vertIndices[i]) * 3)];
+        frames[vi++] = verts[(((std::size_t)vertIndices[i]) * 3) + 1];
+        frames[vi++] = verts[(((std::size_t)vertIndices[i]) * 3) + 2];
+        frames[vi++] = normals[(((std::size_t)vertIndices[i]) * 3)];
+        frames[vi++] = normals[(((std::size_t)vertIndices[i]) * 3) + 1];
+        frames[vi++] = normals[(((std::size_t)vertIndices[i]) * 3) + 2];
+        frames[vi++] = uvs[(((std::size_t)vertIndices[i]) * 2)];
+        frames[vi++] = uvs[(((std::size_t)vertIndices[i]) * 2) + 1];
     }
 }
 
