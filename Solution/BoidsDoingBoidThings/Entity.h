@@ -36,6 +36,8 @@ public:
 	std::weak_ptr<T> AddComponent();
 	template<typename T>
 	std::weak_ptr<T> GetComponent();
+	template<typename T>
+	bool HasComponentOfType();
 	friend class EntityWorld;
 private:
 	void Initialize(unsigned int id, const std::string& name);

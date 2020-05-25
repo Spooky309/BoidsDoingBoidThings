@@ -2,10 +2,12 @@
 #include "Engine.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/intersect.hpp>
 #include "Entity.h"
 #include <random>
 #include "imgui.h"
 #include "EntityWorld.h"
+#include "BoidObstacle.h"
 #include <thread>
 
 //helper macro so i can stop typing the same thing over and over again
@@ -218,6 +220,35 @@ void BoidSwarm::Update()
 			constraintForce = SteerTowards(m_aBoidVelocities[i], constraintForce);
 			desiredVelocity += constraintForce; // this isn't normalized and doesn't take into account desired speed, zoom zoom to inbounds.
 		}
+
+		// Obstacle avoidance
+		std::vector<std::weak_ptr<Entity>> obstacles = Engine::Instance().GetEntityWorld().GetEntitiesWithName("obstacle");
+		for (auto& it : obstacles)
+		{
+			glm::vec3 origin = it.lock()->GetPosition();
+			float radius = it.lock()->GetScale().x; // they're all the same
+			float intersectDistance = 0.0f;
+			if (glm::intersectRaySphere(*myPosition, glm::normalize(m_aBoidVelocities[i]), origin, radius * radius, intersectDistance))
+			{
+				if (intersectDistance < m_fBoidRayLength)
+				{
+					float frac = intersectDistance / m_fBoidRayLength; // 0.0 = we're on it, 1.0 = we're just getting in range
+					float weight = 1.0f - frac; // we need to convert it into a weighting for how hard we want to steer away
+					// ok this is pretty complicated
+					// so we need to normalize the velocity to get the forward vector we used for the ray, then multiply it by the intersection distance
+					// and add it to the boid's current position
+					// so that we can get the point at which the ray made contact with the sphere, then we can subtract off the origin to get a vector
+					// that points away from the origin in direction of the normal
+					glm::vec3 hitpoint = *myPosition + ((glm::normalize(m_aBoidVelocities[i])) * intersectDistance);
+					glm::vec3 normal = glm::normalize(hitpoint - origin);
+					weight *= 50.0f; // should be sufficient amplification, 0-10
+					glm::vec3 obForce = normal * weight;
+					obForce = SteerTowards(m_aBoidVelocities[i], obForce);
+					desiredVelocity += obForce;
+				}
+			}
+		}
+
 		glm::vec3 steeringForce = desiredVelocity - m_aBoidVelocities[i];
 		m_aBoidAccelerations[i] = steeringForce;
 		if (m_aBoidAccelerations[i].length() > m_fBoidMaxForce)
@@ -376,6 +407,8 @@ void BoidSwarm::DrawImgui()
 	ImGui::SliderFloat("Constraint Box Width", &m_fBoidConstraintWidth, 100.0f, 5000.0f);
 	ImGui::SliderFloat("Constraint Box Height", &m_fBoidConstraintHeight, 100.0f, 5000.0f);
 	ImGui::SliderFloat("Constraint Box Length", &m_fBoidConstraintLength, 100.0f, 5000.0f);
+	ImGui::Separator();
+	ImGui::SliderFloat("Raycast distance (for obstacle avoidance)", &m_fBoidRayLength, 10.0f, 1000.0f);
 	ImGui::Separator();
 	ImGui::SliderInt("Number of Boids", &m_iNewNumBoids, 1, 10000);
 	ImGui::Separator();

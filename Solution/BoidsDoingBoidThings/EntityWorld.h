@@ -18,6 +18,7 @@ public:
 	std::weak_ptr<Entity> GetEntityByID(unsigned int id);
 	std::weak_ptr<Entity> GetEntityByName(const std::string& name);
 	std::weak_ptr<Entity> CreateEntity(const std::string& name);
+	std::vector<std::weak_ptr<Entity>> GetEntitiesWithName(const std::string& name);
 	void DestroyEntity(std::weak_ptr<Entity>& e);
 private:
 	void Update();
@@ -27,5 +28,4 @@ private:
 	~EntityWorld() = default;
 	EntityWorld(const EntityWorld&) = delete;
 };
-
 #endif

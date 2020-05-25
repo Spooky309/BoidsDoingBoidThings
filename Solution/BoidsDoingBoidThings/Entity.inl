@@ -70,3 +70,16 @@ std::weak_ptr<T> Entity::AddComponent()
 	// return a ptr to it for if they want to keep it
 	return std::weak_ptr<T>(newPtr);
 }
+
+template<typename T>
+bool Entity::HasComponentOfType()
+{
+	for (auto& it : m_vComponents)
+	{
+		if (dynamic_cast<T*>(it.get()))
+		{
+			return true;
+		}
+	}
+	return false;
+}

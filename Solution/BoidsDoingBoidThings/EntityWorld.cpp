@@ -55,3 +55,16 @@ void EntityWorld::DestroyEntity(std::weak_ptr<Entity>& e)
 		}
 	}
 }
+
+std::vector<std::weak_ptr<Entity>> EntityWorld::GetEntitiesWithName(const std::string& name)
+{
+	std::vector<std::weak_ptr<Entity>> vec;
+	for (auto& it : m_vEntityList)
+	{
+		if (it->GetEntityName() == name)
+		{
+			vec.push_back(std::weak_ptr<Entity>(it));
+		}
+	}
+	return vec;
+}

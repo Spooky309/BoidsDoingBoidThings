@@ -47,6 +47,7 @@ private:
 	float m_fBoidConstraintWidth = 500.0f;
 	float m_fBoidConstraintHeight = 500.0f;
 	float m_fBoidConstraintLength = 500.0f;
+	float m_fBoidRayLength = 500.0f;
 	// Weights on forces
 	float m_fBoidTargetWeight = 0.5f;
 	float m_fBoidAvoidWeight = 1.0f;

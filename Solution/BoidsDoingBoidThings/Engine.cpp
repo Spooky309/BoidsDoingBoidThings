@@ -7,6 +7,7 @@
 #include "Entity.h"
 #include "Camera.h"
 #include "BoidSwarm.h"
+#include "BoidObstacle.h"
 
 Engine::Engine() : m_pWindow(nullptr), m_dLastTime(0.0), m_dDeltaTime(0.0)
 {
@@ -91,6 +92,9 @@ int Engine::Go()
 
 void Engine::Update()
 {
+	ImGui_ImplOpenGL3_NewFrame();
+	ImGui_ImplGlfw_NewFrame();
+	ImGui::NewFrame();
 	// Updating
 	m_Input.Update(); // we first want to copy the keys and buttons from the last frame to the "lastframe" array, before we poll events (which will overwrite current ones)
 	glfwPollEvents();
@@ -101,9 +105,7 @@ void Engine::Update()
 	m_rend3d.Render();
 	// make sure ui draws last
 	
-	ImGui_ImplOpenGL3_NewFrame();
-	ImGui_ImplGlfw_NewFrame();
-	ImGui::NewFrame();
+	
 	ImGui::Begin("Info");
 	ImGui::Text("Viewer Position: %f, %f, %f", m_pViewer.lock()->GetPosition().x, m_pViewer.lock()->GetPosition().y, m_pViewer.lock()->GetPosition().z);
 	ImGui::Text("Viewer Rotation: %f, %f, %f", m_pViewer.lock()->GetEuler().x, m_pViewer.lock()->GetEuler().y, m_pViewer.lock()->GetEuler().z);
@@ -128,6 +130,13 @@ void Engine::Update()
 			glfwSetWindowMonitor(m_pWindow, nullptr, 100, 100, 1280, 720, 0);
 			m_rend3d.UpdateRes(1280, 720);
 		}
+	}
+	ImGui::End();
+	ImGui::Begin("Extras");
+	if (ImGui::Button("Create Obstacle"))
+	{
+		std::weak_ptr<Entity> e = m_EntityWorld.CreateEntity("obstacle");
+		e.lock()->AddComponent<BoidObstacle>();
 	}
 	ImGui::End();
 	std::shared_ptr<BoidSwarm> b = m_pBoidSwarmComponent.lock();
