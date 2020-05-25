@@ -5,6 +5,8 @@
 #include "imgui_impl_opengl3.h"
 #include "ViewControls.h"
 #include "Entity.h"
+#include "Camera.h"
+#include "BoidSwarm.h"
 
 Engine::Engine() : m_pWindow(nullptr), m_dLastTime(0.0), m_dDeltaTime(0.0)
 {
@@ -49,7 +51,12 @@ int Engine::Go()
 	m_rend3d.Init();
 
 	m_pViewer = m_EntityWorld.CreateEntity("viewer");
-	m_pViewer.lock()->AddComponent<ViewControls>();
+	m_pViewer.lock()->AddComponent<ViewControls>(); // I dunno what this warning is on about
+	m_pViewer.lock()->AddComponent<Camera>();
+
+	m_pBoidSwarm = m_EntityWorld.CreateEntity("boidswarm");
+	m_pViewer.lock()->AddComponent<BoidSwarm>();
+
 	while (!glfwWindowShouldClose(m_pWindow))
 	{
 		m_dLastTime = glfwGetTime();
@@ -77,9 +84,9 @@ void Engine::Update()
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
 	ImGui::Begin("Info");
-	ImGui::Text("Player Position: %f, %f, %f", m_pViewer.lock()->GetPosition().x, m_pViewer.lock()->GetPosition().y, m_pViewer.lock()->GetPosition().z);
-	ImGui::Text("Player Rotation: %f, %f, %f", m_pViewer.lock()->GetEuler().x, m_pViewer.lock()->GetEuler().y, m_pViewer.lock()->GetEuler().z);
-	ImGui::Text("Player Forward: %f, %f, %f", m_pViewer.lock()->GetForward().x, m_pViewer.lock()->GetForward().y, m_pViewer.lock()->GetForward().z);
+	ImGui::Text("Viewer Position: %f, %f, %f", m_pViewer.lock()->GetPosition().x, m_pViewer.lock()->GetPosition().y, m_pViewer.lock()->GetPosition().z);
+	ImGui::Text("Viewer Rotation: %f, %f, %f", m_pViewer.lock()->GetEuler().x, m_pViewer.lock()->GetEuler().y, m_pViewer.lock()->GetEuler().z);
+	ImGui::Text("Viewer Forward: %f, %f, %f", m_pViewer.lock()->GetForward().x, m_pViewer.lock()->GetForward().y, m_pViewer.lock()->GetForward().z);
 	ImGui::End();
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

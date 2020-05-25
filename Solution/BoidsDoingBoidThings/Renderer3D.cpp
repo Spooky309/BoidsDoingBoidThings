@@ -1,11 +1,13 @@
 #include "Renderer3D.h"
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 #include <fstream>
 #include <string>
 
 void Renderer3D::Init()
 {
+	glm::mat4 proj = glm::perspective(45.0f, 1280.0f / 720.0f, 0.1f, 10000.0f);
 	// load shaders
 	GLuint fshad; // same for both
 	GLuint vshad;
@@ -39,7 +41,7 @@ void Renderer3D::Init()
 	m_iRendShaderModelMatLoc = glGetUniformLocation(m_iRendShader, "model");
 	m_iRendShaderViewMatLoc = glGetUniformLocation(m_iRendShader, "view");
 	m_iRendShaderProjMatLoc = glGetUniformLocation(m_iRendShader, "proj");
-
+	glUniformMatrix4fv(m_iRendShaderProjMatLoc, 1, GL_FALSE, glm::value_ptr(proj));
 	// Ditto, for the instanced rendering shader
 	m_iInstRendShader = glCreateProgram();
 	glAttachShader(m_iInstRendShader, inst_vshad);
@@ -48,6 +50,7 @@ void Renderer3D::Init()
 	glUseProgram(m_iInstRendShader);
 	m_iInstRendShaderViewMatLoc = glGetUniformLocation(m_iInstRendShader, "view");
 	m_iInstRendShaderProjMatLoc = glGetUniformLocation(m_iInstRendShader, "proj");
+	glUniformMatrix4fv(m_iInstRendShaderProjMatLoc, 1, GL_FALSE, glm::value_ptr(proj));
 
 	// Clear the current program, not sure if this is necessary but let's do it anyway.
 	glUseProgram(0);
@@ -64,7 +67,10 @@ void Renderer3D::Render()
 	{
 		RenderArgs thisRend = m_queuedRenders.front();
 
-		// render it
+		glBindTexture(GL_TEXTURE_2D, thisRend.texture_id);
+		glBindVertexArray(thisRend.vao);
+		glUniformMatrix4fv(m_iRendShaderModelMatLoc, 1, GL_FALSE, glm::value_ptr(thisRend.model_matrix));
+		glDrawArrays(GL_TRIANGLES, 0, thisRend.vert_count);
 
 		m_queuedRenders.pop();
 	}
@@ -73,7 +79,9 @@ void Renderer3D::Render()
 	{
 		InstancedRenderArgs thisRend = m_queuedInstancedRenders.front();
 
-		// render it
+		glBindTexture(GL_TEXTURE_2D, thisRend.texture_id);
+		glBindVertexArray(thisRend.vao);
+		glDrawArraysInstanced(GL_TRIANGLES, 0, thisRend.vert_count, thisRend.num_instances);
 
 		m_queuedInstancedRenders.pop();
 	}

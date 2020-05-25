@@ -9,7 +9,7 @@ void ViewControls::Update()
 	{
 		double relYaw = (Engine::Instance().GetInput().GetMousePosX() - m_dLastMouseX) * m_dSensitivity;
 		double relPitch = (Engine::Instance().GetInput().GetMousePosY() - m_dLastMouseY) * m_dSensitivity;
-		glm::vec3 relRot(glm::radians(relPitch), glm::radians(relYaw), 0.0f);
+		glm::vec3 relRot(-glm::radians(relPitch), glm::radians(relYaw), 0.0f);
 		GetParentEntity()->Rotate(relRot);
 
 		if (Engine::Instance().GetInput().GetKey(GLFW_KEY_W))

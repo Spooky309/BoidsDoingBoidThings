@@ -22,3 +22,8 @@ inline Renderer3D& Engine::GetRenderer3D()
 {
 	return m_rend3d;
 }
+
+inline AssetManager& Engine::GetAssetManager()
+{
+	return m_assetManager;
+}

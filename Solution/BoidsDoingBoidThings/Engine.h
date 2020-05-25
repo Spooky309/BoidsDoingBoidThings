@@ -6,6 +6,7 @@
 #include "EntityWorld.h"
 #include "Input.h"
 #include "Renderer3D.h"
+#include "AssetManager.h"
 // Engine is a singleton class that represents a global point of access for all of the critical systems
 // It's not great but it's cleaner than passing pointers around everywhere.
 
@@ -23,6 +24,7 @@ public:
 	inline Input& GetInput();
 	inline EntityWorld& GetEntityWorld();
 	inline Renderer3D& GetRenderer3D();
+	inline AssetManager& GetAssetManager();
 private:
 	void Update(); // This is responsible for telling all the entities to update and the renderers to render afterwards
 	void Deinit();
@@ -32,10 +34,10 @@ private:
 	GLFWwindow* m_pWindow;
 	EntityWorld m_EntityWorld;
 	Renderer3D m_rend3d;
-
+	AssetManager m_assetManager;
 	// Entities we want to hold for the sake of imgui integration
 	std::weak_ptr<Entity> m_pViewer;
-
+	std::weak_ptr<Entity> m_pBoidSwarm;
 
 	Engine();
 	~Engine() = default;

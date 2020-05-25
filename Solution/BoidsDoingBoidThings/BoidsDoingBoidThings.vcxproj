@@ -144,6 +144,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AssetBase.cpp" />
+    <ClCompile Include="BoidSwarm.cpp" />
+    <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Engine.cpp" />
     <ClCompile Include="Entity.cpp" />
     <ClCompile Include="EntityWorld.cpp" />
@@ -156,12 +159,16 @@
     <ClCompile Include="imgui_widgets.cpp" />
     <ClCompile Include="Input.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="ModelAsset.cpp" />
     <ClCompile Include="Renderer3D.cpp" />
+    <ClCompile Include="TextureAsset.cpp" />
     <ClCompile Include="ViewControls.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AssetBase.h" />
+    <ClInclude Include="AssetManager.h" />
     <ClInclude Include="BoidSwarm.h" />
+    <ClInclude Include="Camera.h" />
     <ClInclude Include="Component.h" />
     <ClInclude Include="Engine.h" />
     <ClInclude Include="Entity.h" />
@@ -174,10 +181,13 @@
     <ClInclude Include="imstb_truetype.h" />
     <ClInclude Include="Input.h" />
     <ClInclude Include="MeshRenderer.h" />
+    <ClInclude Include="ModelAsset.h" />
     <ClInclude Include="Renderer3D.h" />
+    <ClInclude Include="TextureAsset.h" />
     <ClInclude Include="ViewControls.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="AssetManager.inl" />
     <None Include="Engine.inl" />
     <None Include="Entity.inl" />
     <None Include="Input.inl" />

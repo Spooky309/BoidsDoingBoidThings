@@ -6,9 +6,10 @@
 class AssetBase
 {
 public:
-	inline std::string GetName() const { return m_sName; }
-protected:
-	std::string m_sName;
+    AssetBase(const std::string& name);
+    inline std::string GetName() const { return name; }
+private:
+    std::string name;
 };
 
 #endif
