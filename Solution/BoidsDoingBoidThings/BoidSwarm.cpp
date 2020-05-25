@@ -5,6 +5,7 @@
 #include "Entity.h"
 #include <random>
 #include "imgui.h"
+#include "EntityWorld.h"
 #include <thread>
 
 //helper macro so i can stop typing the same thing over and over again
@@ -46,6 +47,7 @@ BoidSwarm::BoidSwarm() :
 	glEnableVertexAttribArray(2);
 	glBindVertexArray(0);
 	SetupRendering();
+	m_pTarget = Engine::Instance().GetEntityWorld().GetEntityByName("boidswarm");
 }
 
 void BoidSwarm::SetupRendering()
@@ -239,7 +241,7 @@ void BoidSwarm::Update()
 
 glm::vec3 BoidSwarm::TargetForce(const glm::vec3& pos)
 {
-	glm::vec3 desiredVelocity = GetParentEntity()->GetPosition() - pos;
+	glm::vec3 desiredVelocity = m_pTarget.lock()->GetPosition() - pos;
 	if (desiredVelocity.length() > 0.0f)
 	{
 		desiredVelocity = glm::normalize(desiredVelocity);
@@ -348,6 +350,17 @@ void BoidSwarm::DrawImgui()
 	ImGui::SliderFloat("Boid View Distance", &m_fBoidViewDistance, 1.0f, 1000.0f);
 	ImGui::Separator();
 	ImGui::Checkbox("Use Target", &m_bUseTarget);
+	if (ImGui::Checkbox("Use Player as Target", &m_bUsePlayerAsTarget))
+	{
+		if (m_bUsePlayerAsTarget)
+		{
+			m_pTarget = Engine::Instance().GetEntityWorld().GetEntityByName("viewer");
+		}
+		else
+		{
+			m_pTarget = Engine::Instance().GetEntityWorld().GetEntityByName("boidswarm");
+		}
+	}
 	ImGui::SliderFloat("Target Force", &newTargetWeight, 0.0f, 1.0f);
 	ImGui::Separator();
 	ImGui::Checkbox("Use Avoid", &m_bUseAvoid);
@@ -360,11 +373,11 @@ void BoidSwarm::DrawImgui()
 	ImGui::Checkbox("Use Coalesce", &m_bUseCoalesce);
 	ImGui::SliderFloat("Coalesce Force", &newCoalesceWeight, 0.0f, 1.0f);
 	ImGui::Separator();
-	ImGui::SliderInt("Number of Boids", &m_iNewNumBoids, 1, 10000);
-	ImGui::Separator();
 	ImGui::SliderFloat("Constraint Box Width", &m_fBoidConstraintWidth, 100.0f, 5000.0f);
 	ImGui::SliderFloat("Constraint Box Height", &m_fBoidConstraintHeight, 100.0f, 5000.0f);
 	ImGui::SliderFloat("Constraint Box Length", &m_fBoidConstraintLength, 100.0f, 5000.0f);
+	ImGui::Separator();
+	ImGui::SliderInt("Number of Boids", &m_iNewNumBoids, 1, 10000);
 	ImGui::Separator();
 	if (ImGui::Button("Apply and Restart"))
 	{

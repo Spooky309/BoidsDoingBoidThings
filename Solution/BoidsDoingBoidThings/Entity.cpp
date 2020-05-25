@@ -43,7 +43,7 @@ void Entity::Initialize(unsigned int id, const std::string& name)
 	m_vPosition = glm::vec3(0.0f, 0.0f, 0.0f);
 	m_vEuler = glm::vec3(0.0f, 0.0f, 0.0f);
 	m_vScale = glm::vec3(1.0f, 1.0f, 1.0f);
-	m_bDirtyTransform = false;
+	m_bDirtyTransform = true;
 	m_mTransformMatrix = glm::mat4(1.0f); // create a new identity matrix
 }
 

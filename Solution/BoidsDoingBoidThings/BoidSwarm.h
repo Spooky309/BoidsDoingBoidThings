@@ -54,6 +54,8 @@ private:
 	float m_fBoidCoalesceWeight = 1.0f;
 
 	bool m_bUseTarget = false;
+	bool m_bUsePlayerAsTarget = false;
+	std::weak_ptr<Entity> m_pTarget;
 	bool m_bUseAvoid = true;
 	bool m_bUseAlign = true;
 	bool m_bUseCoalesce = true;

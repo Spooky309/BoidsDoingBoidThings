@@ -53,6 +53,7 @@ int Engine::Go()
 	m_pViewer = m_EntityWorld.CreateEntity("viewer");
 	m_pViewer.lock()->AddComponent<ViewControls>(); // I dunno what this warning is on about, and frankly, I don't care.
 	m_pViewer.lock()->AddComponent<Camera>();
+	m_pViewer.lock()->Move(glm::vec3(-500.0f, 0.0f, 0.0f));
 
 	m_pBoidSwarm = m_EntityWorld.CreateEntity("boidswarm");
 	m_pBoidSwarmComponent = m_pBoidSwarm.lock()->AddComponent<BoidSwarm>();
