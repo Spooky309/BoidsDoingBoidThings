@@ -183,6 +183,39 @@ void BoidSwarm::Update()
 			desiredVelocity += coalesce * m_fBoidCoalesceWeight;
 		}
 
+		glm::vec3 constraintForce(0);
+		float halfConstraintX = m_fBoidConstraintWidth / 2.0f;
+		float halfConstraintY = m_fBoidConstraintHeight / 2.0f;
+		float halfConstratintZ = m_fBoidConstraintLength / 2.0f;
+		if (myPosition->x > halfConstraintX)
+		{
+			constraintForce.x = halfConstraintX - myPosition->x;
+		}
+		if (myPosition->x < -halfConstraintX)
+		{
+			constraintForce.x = -(myPosition->x + halfConstraintX);
+		}
+		if (myPosition->y > halfConstraintX)
+		{
+			constraintForce.y = halfConstraintX - myPosition->y;
+		}
+		if (myPosition->y < -halfConstraintX)
+		{
+			constraintForce.y = -(myPosition->y + halfConstraintX);
+		}
+		if (myPosition->z > halfConstraintX)
+		{
+			constraintForce.z = halfConstraintX - myPosition->z;
+		}
+		if (myPosition->z < -halfConstraintX)
+		{
+			constraintForce.z = -(myPosition->z + halfConstraintX);
+		}
+		if (!VECZERO(constraintForce))
+		{
+			constraintForce = SteerTowards(m_aBoidVelocities[i], constraintForce);
+			desiredVelocity += constraintForce; // this isn't normalized and doesn't take into account desired speed, zoom zoom to inbounds.
+		}
 		glm::vec3 steeringForce = desiredVelocity - m_aBoidVelocities[i];
 		m_aBoidAccelerations[i] = steeringForce;
 		if (m_aBoidAccelerations[i].length() > m_fBoidMaxForce)
@@ -279,10 +312,14 @@ std::size_t BoidSwarm::BoidsInRange(const glm::vec3& pos)
 	for (std::size_t i = 0; i < m_iNumBoids; i++)
 	{
 		glm::vec3* thePosition = (glm::vec3*) & m_aBoidTransforms[i][3];
-		if (glm::abs(*thePosition - pos).length() < m_fBoidViewDistance)
+		glm::vec3 diff = *thePosition - pos;
+		if (!VECZERO(diff))
 		{
-			num_in_range++;
-			m_aBoidRangeArray[arr_it++] = i;
+			if (diff.length() < m_fBoidViewDistance)
+			{
+				num_in_range++;
+				m_aBoidRangeArray[arr_it++] = i;
+			}
 		}
 	}
 	return num_in_range;
@@ -325,6 +362,10 @@ void BoidSwarm::DrawImgui()
 	ImGui::Separator();
 	ImGui::SliderInt("Number of Boids", &m_iNewNumBoids, 1, 10000);
 	ImGui::Separator();
+	ImGui::SliderFloat("Constraint Box Width", &m_fBoidConstraintWidth, 100.0f, 5000.0f);
+	ImGui::SliderFloat("Constraint Box Height", &m_fBoidConstraintHeight, 100.0f, 5000.0f);
+	ImGui::SliderFloat("Constraint Box Length", &m_fBoidConstraintLength, 100.0f, 5000.0f);
+	ImGui::Separator();
 	if (ImGui::Button("Apply and Restart"))
 	{
 		m_iNumBoids = m_iNewNumBoids;
@@ -332,37 +373,6 @@ void BoidSwarm::DrawImgui()
 	ImGui::Text("You have to press this to update Boid Count\nYou probably don't want to go over 1,000 with all the options enabled.");
 
 	ImGui::End();
-
-	// if the sum of all the weights is above 1, we need to modify the ones that weren't changed by sum(all)-1.0/3
-	float sumWeights = newTargetWeight + newAvoidWeight + newAlignWeight + newCoalesceWeight;
-	if (sumWeights > 1.0f)
-	{
-		float sub = (sumWeights - 1.0f) / 3.0f;
-		if (newTargetWeight != m_fBoidTargetWeight)
-		{
-			newAvoidWeight -= sub;
-			newAlignWeight -= sub;
-			newCoalesceWeight -= sub;
-		}
-		if (newAvoidWeight != m_fBoidAvoidWeight)
-		{
-			newTargetWeight -= sub;
-			newAlignWeight -= sub;
-			newCoalesceWeight -= sub;
-		}
-		if (newAlignWeight != m_fBoidAlignmentWeight)
-		{
-			newAvoidWeight -= sub;
-			newTargetWeight -= sub;
-			newCoalesceWeight -= sub;
-		}
-		if (newCoalesceWeight != m_fBoidCoalesceWeight)
-		{
-			newAvoidWeight -= sub;
-			newAlignWeight -= sub;
-			newTargetWeight -= sub;
-		}
-	}
 	if (m_fBoidSeparationDistance > m_fBoidViewDistance)
 	{
 		m_fBoidSeparationDistance = m_fBoidViewDistance;

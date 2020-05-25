@@ -43,14 +43,17 @@ private:
 	float m_fBoidMaxForce;
 	float m_fMovementCircleRadius;
 	float m_fBoidViewDistance = 400.0f;
-	float m_fBoidSeparationDistance = 200.0f;
+	float m_fBoidSeparationDistance = 4.0f;
+	float m_fBoidConstraintWidth = 500.0f;
+	float m_fBoidConstraintHeight = 500.0f;
+	float m_fBoidConstraintLength = 500.0f;
 	// Weights on forces
 	float m_fBoidTargetWeight = 0.5f;
-	float m_fBoidAvoidWeight = 0.2f;
-	float m_fBoidAlignmentWeight = 0.2f;
-	float m_fBoidCoalesceWeight = 0.1f;
+	float m_fBoidAvoidWeight = 1.0f;
+	float m_fBoidAlignmentWeight = 0.25f;
+	float m_fBoidCoalesceWeight = 1.0f;
 
-	bool m_bUseTarget = true;
+	bool m_bUseTarget = false;
 	bool m_bUseAvoid = true;
 	bool m_bUseAlign = true;
 	bool m_bUseCoalesce = true;
