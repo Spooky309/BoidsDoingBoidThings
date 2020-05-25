@@ -26,7 +26,7 @@ int Engine::Go()
 #endif
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE); // I remember this being necessary for macOS.
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	m_pWindow = glfwCreateWindow(1280, 720, "dont crash", nullptr, nullptr);
+	m_pWindow = glfwCreateWindow(1920, 1080, "dont crash", nullptr, nullptr);
 	if (!m_pWindow)
 	{
 		std::cout << "Couldn't get a window from GLFW\n";
@@ -55,13 +55,33 @@ int Engine::Go()
 	m_pViewer.lock()->AddComponent<Camera>();
 
 	m_pBoidSwarm = m_EntityWorld.CreateEntity("boidswarm");
-	m_pViewer.lock()->AddComponent<BoidSwarm>();
+	m_pBoidSwarmComponent = m_pBoidSwarm.lock()->AddComponent<BoidSwarm>();
 
 	while (!glfwWindowShouldClose(m_pWindow))
 	{
 		m_dLastTime = glfwGetTime();
 		Update();
 		m_dDeltaTime = glfwGetTime() - m_dLastTime;
+		m_aFrameTimes[m_iFrameTimei++] = m_dDeltaTime;
+		// we should never go above 1023 fps... especially with vsync on.
+		if (m_iFrameTimei > 1023) m_iFrameTimei = 1023;
+		if (m_dLastFrametimeUpdate + 1.0f < glfwGetTime())
+		{
+			m_dMinTime = 999999.9;
+			m_dMaxTime = 0.0;
+			double sumTime = 0.0;
+			for (std::size_t i = 0; i < m_iFrameTimei; i++)
+			{
+				// update min and max as we go
+				if (m_aFrameTimes[i] < m_dMinTime) m_dMinTime = m_aFrameTimes[i];
+				if (m_aFrameTimes[i] > m_dMaxTime) m_dMaxTime = m_aFrameTimes[i];
+				sumTime += m_aFrameTimes[i];
+			}
+			sumTime /= m_iFrameTimei + 1;
+			m_dAvgTime = sumTime;
+			m_iFrameTimei = 0;
+			m_dLastFrametimeUpdate = glfwGetTime();
+		}
 	}
 
 	Deinit();
@@ -87,10 +107,14 @@ void Engine::Update()
 	ImGui::Text("Viewer Position: %f, %f, %f", m_pViewer.lock()->GetPosition().x, m_pViewer.lock()->GetPosition().y, m_pViewer.lock()->GetPosition().z);
 	ImGui::Text("Viewer Rotation: %f, %f, %f", m_pViewer.lock()->GetEuler().x, m_pViewer.lock()->GetEuler().y, m_pViewer.lock()->GetEuler().z);
 	ImGui::Text("Viewer Forward: %f, %f, %f", m_pViewer.lock()->GetForward().x, m_pViewer.lock()->GetForward().y, m_pViewer.lock()->GetForward().z);
+	ImGui::Separator();
+	ImGui::Text("Frametime min/max/avg: %f/%f/%f", m_dMinTime, m_dMaxTime, m_dAvgTime);
+	ImGui::Text("Average Framerate: %fFPS", 1.0/m_dAvgTime);
 	ImGui::End();
+	std::shared_ptr<BoidSwarm> b = m_pBoidSwarmComponent.lock();
+	b->DrawImgui();
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
 	glfwSwapBuffers(m_pWindow);
 
 	if (m_Input.GetKeyDown(GLFW_KEY_ESCAPE))

@@ -7,6 +7,7 @@
 #include "Input.h"
 #include "Renderer3D.h"
 #include "AssetManager.h"
+class BoidSwarm;
 // Engine is a singleton class that represents a global point of access for all of the critical systems
 // It's not great but it's cleaner than passing pointers around everywhere.
 
@@ -30,6 +31,13 @@ private:
 	void Deinit();
 	double m_dLastTime; // stores the time the last frame began
 	double m_dDeltaTime; // stores the time the last frame took to render
+	double m_aFrameTimes[1024];
+	double m_dMinTime;
+	double m_dMaxTime;
+	double m_dAvgTime;
+	double m_dAvgFps;
+	std::size_t m_iFrameTimei = 0;
+	double m_dLastFrametimeUpdate = 0;
 	Input m_Input;
 	GLFWwindow* m_pWindow;
 	EntityWorld m_EntityWorld;
@@ -38,6 +46,7 @@ private:
 	// Entities we want to hold for the sake of imgui integration
 	std::weak_ptr<Entity> m_pViewer;
 	std::weak_ptr<Entity> m_pBoidSwarm;
+	std::weak_ptr<BoidSwarm> m_pBoidSwarmComponent;
 
 	Engine();
 	~Engine() = default;
