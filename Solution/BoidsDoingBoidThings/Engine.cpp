@@ -51,7 +51,7 @@ int Engine::Go()
 	m_rend3d.Init();
 
 	m_pViewer = m_EntityWorld.CreateEntity("viewer");
-	m_pViewer.lock()->AddComponent<ViewControls>(); // I dunno what this warning is on about
+	m_pViewer.lock()->AddComponent<ViewControls>(); // I dunno what this warning is on about, and frankly, I don't care.
 	m_pViewer.lock()->AddComponent<Camera>();
 
 	m_pBoidSwarm = m_EntityWorld.CreateEntity("boidswarm");
