@@ -3,6 +3,12 @@
 #define H_BOIDSWARM
 #include "Component.h"
 #include <glm/glm.hpp>
+#include <vector>
+#include <thread>
+#include <queue>
+#include <mutex>
+#include <atomic>
+#include <condition_variable>
 #include "ModelAsset.h"
 #include "TextureAsset.h"
 // The position of the parent entity of this component acts as the "target" for the boids
@@ -14,6 +20,7 @@ public:
 	void Update() override;
 	void DrawImgui();
 private:
+	void DoBoids(size_t begin, size_t len);
 	void PushRender();
 	void SetupRendering();
 	glm::vec3 TargetForce(const glm::vec3& pos);
@@ -29,13 +36,20 @@ private:
 
 	unsigned int m_iNumBoids;
 	unsigned int m_iLastNumBoids;
-	int m_iNewNumBoids;
+	unsigned int m_iNewNumBoids;
+	bool m_bRefreshBoids = false;
+
 	ModelAsset* m_boidModel;
 	TextureAsset* m_boidTexture;
 
 	glm::vec3* m_aBoidVelocities;
+	glm::vec3* m_aTempBoidVelocities;
+
 	glm::vec3* m_aBoidAccelerations;
+	glm::vec3* m_aTempBoidAccelerations;
+
 	glm::mat4* m_aBoidTransforms;
+	glm::mat4* m_aTempBoidTransforms;
 
 	// Variables to do with the simulation
 	float m_fBoidDrag;
@@ -61,7 +75,19 @@ private:
 	bool m_bUseAvoid = true;
 	bool m_bUseAlign = true;
 	bool m_bUseCoalesce = true;
+	bool m_bUseThreads = true;
 
+	int m_iNumThreads = 1;
+
+
+	std::vector<std::thread*> m_pThreads; // thread pool
+	std::vector<std::pair<size_t, size_t>> m_pTxQueues; // send to threads what offset and size to use
+	std::mutex m_pBeginMutex;
+	std::mutex m_pDoneMutex;
+	std::condition_variable m_pBeginNotify;
+	std::condition_variable m_pDoneNotify;
+	std::mutex m_pCounterMutex;
+	std::atomic<int> counter;
 	GLuint m_iVao;
 	GLuint m_iModelVbo;
 	GLuint m_iInstanceVbo;

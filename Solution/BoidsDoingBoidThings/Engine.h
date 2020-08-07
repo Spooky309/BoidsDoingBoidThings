@@ -3,6 +3,8 @@
 #define H_ENGINE
 #include <glad/glad.h>
 #include <glfw/glfw3.h>
+#include <iostream>
+#include <fstream>
 #include "EntityWorld.h"
 #include "Input.h"
 #include "Renderer3D.h"
@@ -48,7 +50,7 @@ private:
 	std::weak_ptr<Entity> m_pViewer;
 	std::weak_ptr<Entity> m_pBoidSwarm;
 	std::weak_ptr<BoidSwarm> m_pBoidSwarmComponent;
-
+	std::ofstream m_fFramerateLog;
 	Engine();
 	~Engine() = default;
 	Engine(const Engine&) = delete;

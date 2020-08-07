@@ -9,6 +9,7 @@
 #include "EntityWorld.h"
 #include "BoidObstacle.h"
 #include <thread>
+#include <Windows.h>
 
 //helper macro so i can stop typing the same thing over and over again
 #define VECZERO(vec) (vec.x == 0.0f && vec.y == 0.0f && vec.z == 0.0f)
@@ -24,6 +25,10 @@ BoidSwarm::BoidSwarm() :
 	m_aBoidVelocities(nullptr),
 	m_aBoidAccelerations(nullptr),
 	m_aBoidTransforms(nullptr),
+	m_aTempBoidVelocities(nullptr),
+	m_aTempBoidAccelerations(nullptr),
+	m_aTempBoidTransforms(nullptr),
+	m_aBoidRangeArray(nullptr),
 	m_fMovementCircleRadius(100.0f),
 	m_fBoidDrag(0.01f),
 	m_fBoidDesiredSpeed(50.0f),
@@ -50,7 +55,40 @@ BoidSwarm::BoidSwarm() :
 	glBindVertexArray(0);
 	SetupRendering();
 	m_pTarget = Engine::Instance().GetEntityWorld().GetEntityByName("boidswarm");
+	LPSYSTEM_INFO systemInfo = new SYSTEM_INFO();
+	GetSystemInfo(systemInfo);
+	m_iNumThreads = systemInfo->dwNumberOfProcessors;
+	for (unsigned int tnum = 0; tnum < m_iNumThreads; tnum++)
+	{
+		m_pThreads.push_back(new std::thread([&, tnum]()
+		{
+			for (;;)
+			{
+				try
+				{
+					std::unique_lock<std::mutex> lk(m_pBeginMutex);
+					m_pBeginNotify.wait(lk);
+					lk.unlock();
+					m_pBeginMutex.lock();
+					std::pair<size_t, size_t> numbers = m_pTxQueues[tnum];
+					m_pBeginMutex.unlock();
+					DoBoids(numbers.first, numbers.second);
+					m_pCounterMutex.lock();
+					int c = counter.load();
+					counter.store(c + 1);
+					m_pCounterMutex.unlock();
+					m_pDoneNotify.notify_all();
+				}
+				catch (std::system_error& e)
+				{
+					std::cout << e.what() << "\n";
+				}
+			}
+		}));
+		m_pThreads[tnum]->detach();
+	}
 }
+
 
 void BoidSwarm::SetupRendering()
 {
@@ -67,25 +105,46 @@ void BoidSwarm::SetupRendering()
 	{
 		free(m_aBoidTransforms);
 	}
+	if (m_aTempBoidVelocities)
+	{
+		free(m_aTempBoidVelocities);
+	}
+	if (m_aTempBoidAccelerations)
+	{
+		free(m_aTempBoidAccelerations);
+	}
+	if (m_aTempBoidTransforms)
+	{
+		free(m_aTempBoidTransforms);
+	}
 	if (m_iInstanceVbo)
 	{
 		glDeleteBuffers(1, &m_iInstanceVbo);
 	}
+
 	m_aBoidVelocities = (glm::vec3*)malloc(sizeof(glm::vec3) * m_iNumBoids);
 	m_aBoidAccelerations = (glm::vec3*)malloc(sizeof(glm::vec3) * m_iNumBoids);
 	m_aBoidTransforms = (glm::mat4*)malloc(sizeof(glm::mat4) * m_iNumBoids);
+
+	m_aTempBoidVelocities = (glm::vec3*)malloc(sizeof(glm::vec3) * m_iNumBoids);
+	m_aTempBoidAccelerations = (glm::vec3*)malloc(sizeof(glm::vec3) * m_iNumBoids);
+	m_aTempBoidTransforms = (glm::mat4*)malloc(sizeof(glm::mat4) * m_iNumBoids);
 	// initialize them all
 	for (std::size_t i = 0; i < m_iNumBoids; i++)
 	{
-		m_aBoidVelocities[i] = glm::vec3(0.0f);
-		m_aBoidAccelerations[i] = glm::vec3(0.0f);
-		m_aBoidTransforms[i] = glm::mat4(1.0f);
+		m_aTempBoidVelocities[i] = glm::vec3(0.0f);
+		m_aTempBoidAccelerations[i] = glm::vec3(0.0f);
+		m_aTempBoidTransforms[i] = glm::mat4(1.0f);
 		// randomly generate position between -num_boids and num_boids
 		int x = (((rand() % m_iNumBoids) * 2) - m_iNumBoids);
 		int y = (((rand() % m_iNumBoids) * 2) - m_iNumBoids);
 		int z = (((rand() % m_iNumBoids) * 2) - m_iNumBoids);
-		m_aBoidTransforms[i] = glm::translate(m_aBoidTransforms[i], glm::vec3(x, y, z));
+		
+		m_aTempBoidTransforms[i] = glm::translate(m_aTempBoidTransforms[i], glm::vec3(x, y, z));
 	}
+	memcpy(m_aBoidVelocities, m_aTempBoidVelocities, m_iNumBoids * sizeof(glm::vec3));
+	memcpy(m_aBoidAccelerations, m_aTempBoidAccelerations, m_iNumBoids * sizeof(glm::vec3));
+	memcpy(m_aBoidTransforms, m_aTempBoidTransforms, m_iNumBoids * sizeof(glm::mat4));
 	glGenBuffers(1, &m_iInstanceVbo);
 	glBindBuffer(GL_ARRAY_BUFFER, m_iInstanceVbo);
 	glBufferData(GL_ARRAY_BUFFER, m_iNumBoids * sizeof(glm::mat4), m_aBoidTransforms, GL_DYNAMIC_DRAW);
@@ -116,9 +175,10 @@ void BoidSwarm::SetupRendering()
 
 void BoidSwarm::Update()
 {
-	// first, we need to see if the number of boids has changed, if so, we need to re-create the arrays and VBO/VAO
-	if (m_iNumBoids != m_iLastNumBoids)
+	if (m_bRefreshBoids)
 	{
+		m_iNumBoids = m_iNewNumBoids;
+		m_bRefreshBoids = false;
 		m_iLastNumBoids = m_iNumBoids;
 		SetupRendering();
 	}
@@ -127,11 +187,60 @@ void BoidSwarm::Update()
 	float time = (float)glfwGetTime();
 	GetParentEntity()->SetPosition(glm::vec3(sin(time) * m_fMovementCircleRadius, sin(time) * m_fMovementCircleRadius, cos(time) * m_fMovementCircleRadius));
 	// update all the boids and their transforms
-	for (std::size_t i = 0; i < m_iNumBoids; i++)
+	//DoBoids(0, m_iNumBoids);
+	if (m_bUseThreads)
+	{
+		size_t offset = 0;
+		size_t len = m_iNumBoids / m_iNumThreads;
+		counter.store(0);
+		m_pBeginMutex.lock();
+		for (size_t i = 0; i < m_iNumThreads; i++)
+		{
+			if (i == m_iNumThreads - 1)
+			{
+				len += m_iNumBoids % m_iNumThreads;
+			}
+			m_pTxQueues.emplace_back(std::pair<size_t, size_t>(offset, len));
+			offset += len;
+		}
+		m_pBeginMutex.unlock();
+		m_pBeginNotify.notify_all();
+		bool d = false;
+		while (!d)
+		{
+			d = (counter.load() == m_iNumThreads);
+		}
+		//while (counter.load() != m_iNumThreads)
+		//{
+		//	std::unique_lock lk(m_pDoneMutex);
+		//	m_pDoneNotify.wait(lk);
+		//}
+		m_pBeginMutex.lock();
+		m_pTxQueues.clear();
+		m_pBeginMutex.unlock();
+	}
+	else
+	{
+		DoBoids(0, m_iNumBoids);
+	}
+	memcpy(m_aBoidVelocities, m_aTempBoidVelocities, m_iNumBoids * sizeof(glm::vec3));
+	memcpy(m_aBoidAccelerations, m_aTempBoidAccelerations, m_iNumBoids * sizeof(glm::vec3));
+	memcpy(m_aBoidTransforms, m_aTempBoidTransforms, m_iNumBoids * sizeof(glm::mat4));
+	glBindVertexArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, m_iInstanceVbo);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, m_iNumBoids * sizeof(glm::mat4), m_aBoidTransforms); // I think it's better to push all the transforms than just the ones that updated
+	// because that'd result in more gl calls
+	// push the render to the rqueue
+	PushRender();
+}
+
+void BoidSwarm::DoBoids(size_t begin, size_t len)
+{
+	for (std::size_t i = begin; i < begin + len; i++)
 	{
 		glm::vec3 positionDelta(0);
 		// make a decision
-		glm::vec3* myPosition = (glm::vec3*)&m_aBoidTransforms[i][3]; // the fourth row of the matrix is our position
+		glm::vec3* myPosition = (glm::vec3*) & m_aBoidTransforms[i][3]; // the fourth row of the matrix is our position
 		glm::vec3 desiredVelocity(0);
 		glm::vec3 target(0.0f);
 		glm::vec3 avoid(0.0f);
@@ -250,24 +359,18 @@ void BoidSwarm::Update()
 		}
 
 		glm::vec3 steeringForce = desiredVelocity - m_aBoidVelocities[i];
-		m_aBoidAccelerations[i] = steeringForce;
-		if (m_aBoidAccelerations[i].length() > m_fBoidMaxForce)
+		if (steeringForce.length() > m_fBoidMaxForce)
 		{
-			m_aBoidAccelerations[i] = glm::normalize(m_aBoidAccelerations[i]);
-			m_aBoidAccelerations[i] *= m_fBoidMaxForce;
+			steeringForce = glm::normalize(steeringForce);
+			steeringForce *= m_fBoidMaxForce;
 		}
+		m_aTempBoidAccelerations[i] = steeringForce;
 		// apply acceleration and velocity
-		m_aBoidVelocities[i] += m_aBoidAccelerations[i];
-		m_aBoidVelocities[i] *= ((1.0f - m_fBoidDrag));
-		*myPosition += m_aBoidVelocities[i];
-		m_aBoidAccelerations[i] = glm::vec3(0.0f);
+		m_aTempBoidVelocities[i] += m_aTempBoidAccelerations[i];
+		m_aTempBoidVelocities[i] *= ((1.0f - m_fBoidDrag));
+		*((glm::vec3*)&m_aTempBoidTransforms[i][3]) += m_aTempBoidVelocities[i];
+		m_aTempBoidAccelerations[i] = glm::vec3(0.0f);
 	}
-	glBindVertexArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, m_iInstanceVbo);
-	glBufferSubData(GL_ARRAY_BUFFER, 0, m_iNumBoids * sizeof(glm::mat4), m_aBoidTransforms); // I think it's better to push all the transforms than just the ones that updated
-	// because that'd result in more gl calls
-	// push the render to the rqueue
-	PushRender();
 }
 
 glm::vec3 BoidSwarm::TargetForce(const glm::vec3& pos)
@@ -411,11 +514,13 @@ void BoidSwarm::DrawImgui()
 	ImGui::SliderFloat("Raycast distance (for obstacle avoidance)", &m_fBoidRayLength, 10.0f, 1000.0f);
 	ImGui::SliderFloat("Obstacle Avoidance Weight", &m_fBoidObstacleWeight, 0.0f, 100.0f);
 	ImGui::Separator();
-	ImGui::SliderInt("Number of Boids", &m_iNewNumBoids, 1, 10000);
+	ImGui::Checkbox("Use Multithreading", &m_bUseThreads);
+	ImGui::Separator();
+	ImGui::SliderInt("Number of Boids", (int*)&m_iNewNumBoids, 1, 50000);
 	ImGui::Separator();
 	if (ImGui::Button("Apply and Restart"))
 	{
-		m_iNumBoids = m_iNewNumBoids;
+		m_bRefreshBoids = true;
 	}
 	ImGui::Text("You have to press this to update Boid Count\nYou probably don't want to go over 1,000 with all the options enabled.");
 

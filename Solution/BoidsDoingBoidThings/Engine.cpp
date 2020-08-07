@@ -9,7 +9,7 @@
 #include "BoidSwarm.h"
 #include "BoidObstacle.h"
 
-Engine::Engine() : m_pWindow(nullptr), m_dLastTime(0.0), m_dDeltaTime(0.0)
+Engine::Engine() : m_pWindow(nullptr), m_dLastTime(0.0), m_dDeltaTime(0.0), m_fFramerateLog(std::ofstream("frametimes.log"))
 {
 }
 
@@ -37,6 +37,7 @@ int Engine::Go()
 	gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 	glfwSwapInterval(1); // let's get some vsync
 	glClearColor(0.2f, 0.0f, 0.4f, 1.0f); // a good colour
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	// make the rendering not terrible
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
@@ -82,10 +83,11 @@ int Engine::Go()
 			sumTime /= m_iFrameTimei + 1;
 			m_dAvgTime = sumTime;
 			m_iFrameTimei = 0;
+			m_fFramerateLog << m_dAvgTime << "\n";
 			m_dLastFrametimeUpdate = glfwGetTime();
 		}
 	}
-
+	m_fFramerateLog.close();
 	Deinit();
 	return 0;
 }
